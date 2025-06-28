@@ -2,4 +2,4 @@ INSERT INTO USERS (ID, USERNAME, PASSWORD, ROLE)
 VALUES (1, 'admin', '{noop}password123', 'ADMIN');
 
 INSERT INTO USERS (ID, USERNAME, PASSWORD, ROLE)
-VALUES (1, 'user', '{noop}1234', 'USER');
+VALUES (2, 'user', '{noop}1234', 'USER');
