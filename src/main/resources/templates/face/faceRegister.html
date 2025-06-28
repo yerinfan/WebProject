@@ -5,7 +5,6 @@
   <title>얼굴 등록</title>
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
-
   <style>
     video {
       width: 320px;
@@ -19,7 +18,6 @@
     }
   </style>
 </head>
-
 <body>
   <h2>얼굴 등록</h2>
   <p>카메라를 응시해 주세요. 얼굴 3장을 자동으로 수집합니다.</p>
@@ -31,94 +29,93 @@
   <br />
   <a th:href="@{/rooms}">← 채팅방 목록으로</a>
 
-  <!-- 사용자명 Thymeleaf에서 주입 -->
+  <!-- Thymeleaf에서 사용자명 및 CSRF 토큰 주입 -->
   <script th:inline="javascript">
     const username = [[${#authentication.name}]];
     const csrfToken = /*[[${_csrf.token}]]*/ "";
     const csrfHeader = /*[[${_csrf.headerName}]]*/ "";
   </script>
 
- <script>
-const video = document.getElementById('video');
-const startBtn = document.getElementById('startBtn');
-const statusDiv = document.getElementById('status');
+  <script>
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const statusDiv = document.getElementById('status');
+    const totalFaces = 3;
+    let faceCount = 0;
+    const images = [];
 
-let faceCount = 0;
-const totalFaces = 3;
-const images = [];
+    const flaskBaseUrl = 'face-login-server-production.up.railway.app'; // ← 여기를 배포 주소로 바꾸세요
 
-navigator.mediaDevices.getUserMedia({ video: true })
-  .then(stream => {
-    video.srcObject = stream;
-  })
-  .catch(err => {
-    alert('카메라 사용 불가: ' + err);
-  });
-
-function checkFace(imageData) {
-  return fetch('http://localhost:5000/face/check', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: imageData })
-  })
-    .then(res => res.json())
-    .then(data => data.hasFace);
-}
-
-async function captureAndSend(username) {
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 320;
-  canvas.height = video.videoHeight || 240;
-  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  const imageData = canvas.toDataURL('image/jpeg');
-
-  const hasFace = await checkFace(imageData);
-  if (!hasFace) {
-    statusDiv.innerText = "얼굴이 감지되지 않았습니다. 다시 시도 중...";
-    setTimeout(() => captureAndSend(username), 1000);
-    return;
-  }
-
-  images.push(imageData);
-  faceCount++;
-  statusDiv.innerText = `${faceCount}장 수집됨`;
-
-  if (faceCount >= totalFaces) {
-    statusDiv.innerText = "서버에 등록 중...";
-
-    fetch('/register-face', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [csrfHeader]: csrfToken
-      },
-      body: JSON.stringify({ username, images })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          statusDiv.innerText = "등록 성공!";
-          setTimeout(() => window.location.href = "/rooms", 1500);
-        } else {
-          statusDiv.innerText = "등록 실패: " + data.message;
-        }
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
       })
       .catch(err => {
-        statusDiv.innerText = "서버 오류: " + err;
+        alert('카메라 사용 불가: ' + err);
       });
-  } else {
-    setTimeout(() => captureAndSend(username), 1000);
-  }
-}
 
-startBtn.addEventListener('click', () => {
-  faceCount = 0;
-  images.length = 0;
-  statusDiv.innerText = "촬영 시작...";
-  captureAndSend(username);
-});
-</script>
+    function checkFace(imageData) {
+      return fetch(`${flaskBaseUrl}/face/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData })
+      })
+      .then(res => res.json())
+      .then(data => data.hasFace);
+    }
 
+    async function captureAndSend(username) {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL('image/jpeg');
+
+      const hasFace = await checkFace(imageData);
+      if (!hasFace) {
+        statusDiv.innerText = "얼굴이 감지되지 않았습니다. 다시 시도 중...";
+        setTimeout(() => captureAndSend(username), 1000);
+        return;
+      }
+
+      images.push(imageData);
+      faceCount++;
+      statusDiv.innerText = `${faceCount}장 수집됨`;
+
+      if (faceCount >= totalFaces) {
+        statusDiv.innerText = "서버에 등록 중...";
+
+        fetch(`${flaskBaseUrl}/register-face`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, images })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            statusDiv.innerText = "등록 성공!";
+            setTimeout(() => window.location.href = "/rooms", 1500);
+          } else {
+            statusDiv.innerText = "등록 실패: " + data.message;
+          }
+        })
+        .catch(err => {
+          statusDiv.innerText = "서버 오류: " + err;
+        });
+      } else {
+        setTimeout(() => captureAndSend(username), 1000);
+      }
+    }
+
+    startBtn.addEventListener('click', () => {
+      faceCount = 0;
+      images.length = 0;
+      statusDiv.innerText = "촬영 시작...";
+      captureAndSend(username);
+    });
+  </script>
 </body>
 </html>
