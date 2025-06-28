@@ -17,9 +17,11 @@ java {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url 'https://djl.ai/maven' } // ✅ 꼭 있어야 함!
     maven { url = 'https://repo.spring.io/milestone' }
     maven { url = 'https://repo.spring.io/snapshot' }
-    maven { url = 'https://oss.sonatype.org/content/repositories/releases/' }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://oss.sonatype.org/content/repositories/releases/" }
 }
 
 
@@ -30,30 +32,30 @@ configurations {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	annotationProcessor 'org.projectlombok:lombok'
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	runtimeOnly 'com.oracle.database.jdbc:ojdbc8:19.8.0.0'
-	implementation 'com.oracle.database.jdbc:ojdbc8:21.7.0.0'
-    implementation "ai.djl:api:0.24.0"
-    implementation "ai.djl:model-zoo:0.24.0"
-    implementation "ai.djl.basicmodelzoo:basicmodel-zoo:0.24.0"
-    implementation "ai.djl.modality:cv:0.24.0"
-    implementation "ai.djl.pytorch:pytorch-engine:0.24.0"
-    implementation "ai.djl.pytorch:pytorch-model-zoo:0.24.0"
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-websocket"
+    implementation "org.thymeleaf.extras:thymeleaf-extras-springsecurity6"
+
+    implementation "ai.djl:api:0.26.0"
+    implementation "ai.djl:model-zoo:0.26.0"
+    implementation "ai.djl.pytorch:pytorch-engine:0.26.0"
+    implementation "ai.djl.pytorch:pytorch-model-zoo:0.26.0"
+
+	runtimeOnly 'com.h2database:h2'
+    //runtimeOnly 'com.oracle.database.jdbc:ojdbc8:21.7.0.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
+
 
 tasks.named('test') {
 	useJUnitPlatform()

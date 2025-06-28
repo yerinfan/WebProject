@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: springboot-app
+    env: docker
+    repo: https://github.com/yourname/your-repo
+    branch: main
+    plan: free

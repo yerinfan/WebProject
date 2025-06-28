@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: spring-boot-app
+    env: java
+    buildCommand: "./gradlew clean bootWar"
+    startCommand: "java -jar build/libs/*.war"
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+    plan: free
