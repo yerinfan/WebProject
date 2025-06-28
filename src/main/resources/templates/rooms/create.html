@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>채팅방 생성</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+    <h1>새 채팅방 만들기</h1>
+    <form th:action="@{/rooms/create}" method="post">
+        <!-- CSRF 토큰 -->
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div>
+            <label for="name">방 이름:</label>
+            <input type="text" id="name" name="name" placeholder="방 이름을 입력하세요" required/>
+        </div>
+
+        <div style="margin-top: 1em;">
+            <button type="submit">생성</button>
+            <a th:href="@{/rooms}" style="margin-left:1em;">취소</a>
+        </div>
+    </form>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>내 채팅방 목록</title>
+  <link rel="stylesheet" href="/css/rooms.css" />
+</head>
+
+<body>
+  <div class="rooms-container">
+
+    <!-- ✅ 얼굴 등록 안내 메시지 -->
+    <div th:if="${!faceRegistered}" class="face-warning">
+      <p>⚠ 아직 얼굴 인식 정보가 등록되지 않았습니다.</p>
+      <a th:href="@{/register-face}" class="btn face-register">얼굴 등록하기</a>
+    </div>
+
+    <h1 class="page-title">내 채팅방 목록</h1>
+
+    <ul class="room-list">
+      <li th:each="r : ${rooms}" class="room-item">
+        <span class="room-name" th:text="${r.name}">Room1</span>
+        <div class="room-actions">
+          <a th:href="@{|/rooms/${r.id}|}" class="btn enter">입장</a>
+          <form th:action="@{|/rooms/${r.id}/delete|}" method="post" class="inline-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="btn delete">삭제</button>
+          </form>
+        </div>
+      </li>
+    </ul>
+
+    <section class="create-section">
+      <h2>방 생성</h2>
+      <form th:action="@{/rooms/create}" method="post" class="inline-form">
+        <input type="text" name="name" placeholder="방 이름" required />
+        <button type="submit" class="btn create">생성</button>
+      </form>
+    </section>
+
+    <section class="join-section">
+      <h2>초대코드로 입장</h2>
+      <form th:action="@{/rooms/join}" method="post" class="inline-form">
+        <input type="text" name="code" placeholder="초대 코드" required />
+        <button type="submit" class="btn join">입장</button>
+      </form>
+    </section>
+
+    <form th:action="@{/logout}" method="post" class="logout-form">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <button type="submit" class="btn logout">로그아웃</button>
+    </form>
+  </div>
+</body>
+</html>

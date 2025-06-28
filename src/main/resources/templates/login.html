@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<title>로그인</title>
+<link rel="stylesheet" href="/css/login.css" />
+</head>
+
+<body>
+	<div class="login-container">
+
+		<h3>로그인</h3>
+
+		<!-- 메시지 영역 -->
+		<div th:if="${param.error}" class="alert alert-danger">로그인에 실패했습니다.</div>
+		<div th:if="${param.logout}" class="alert alert-success">로그아웃되었습니다.</div>
+
+		<!-- ✅ 회원가입 성공 메시지 + 얼굴 등록 유도 버튼 -->
+		<div th:if="${param.registered}" class="alert alert-success">
+			회원가입에 성공했습니다. <br>
+			<button onclick="promptFaceRegister()" class="btn-face-reg">얼굴을 등록하시겠습니까?</button>
+		</div>
+
+		<form th:action="@{/login}" method="post">
+			<div class="form-group">
+				<label for="username">아이디</label>
+				<input type="text" id="username" name="username" required />
+			</div>
+
+			<div class="form-group">
+				<label for="password">비밀번호</label>
+				<input type="password" id="password" name="password" required />
+			</div>
+
+			<button type="submit">로그인</button>
+		</form>
+
+		<div class="links">
+			<a th:href="@{/login/face}">얼굴 로그인</a> | <a th:href="@{/signup}">회원가입</a>
+		</div>
+
+		<div th:if="${param.error}" class="alert alert-danger">
+			<span th:switch="${param.error}">
+				<span th:case="'face'">얼굴 인식에 실패했습니다.</span>
+				<span th:case="*">로그인에 실패했습니다.</span>
+			</span>
+		</div>
+
+		<div th:if="${registeredFace}" class="alert alert-success">
+			얼굴 등록이 완료되었습니다. 이제 얼굴로 로그인할 수 있습니다.
+		</div>
+
+	</div>
+
+	<!-- ✅ 얼굴 등록 유도 스크립트 -->
+	<script>
+		function promptFaceRegister() {
+			if (confirm("얼굴 인식을 등록하시겠습니까?")) {
+				window.location.href = "/register-face";
+			}
+		}
+	</script>
+
+	<!-- ✅ 버튼 스타일 -->
+	<style>
+		.btn-face-reg {
+			margin-top: 10px;
+			padding: 8px 14px;
+			background-color: #007BFF;
+			color: white;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+		.btn-face-reg:hover {
+			background-color: #0056b3;
+		}
+	</style>
+</body>
+</html>

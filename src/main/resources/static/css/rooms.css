@@ -1,0 +1,124 @@
+/* rooms.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #4e54c8, #8f94fb);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  padding-top: 60px;
+}
+
+.rooms-container {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.page-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #4e54c8;
+}
+
+.room-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+}
+
+.room-item {
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  background-color: #f8f8ff;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.room-actions {
+  display: flex;
+  gap: 10px;
+}
+
+section {
+  margin-top: 25px;
+}
+
+input[type="text"] {
+  padding: 10px 12px;
+  font-size: 14px;
+  width: 60%;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  box-sizing: border-box;
+}
+
+button,
+.btn {
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  color: white;
+  display: inline-block;
+}
+
+.btn.enter {
+  background-color: #4e54c8;
+}
+
+.btn.delete {
+  background-color: #d9534f;
+}
+
+.btn.create {
+  background-color: #28a745;
+}
+
+.btn.join {
+  background-color: #007bff;
+}
+
+.btn.logout {
+  background-color: #6c757d;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+.face-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ffeeba;
+}
+
+.btn.face-register {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 10px;
+  text-decoration: none;
+  border-radius: 5px;
+  margin-left: 10px;
+}

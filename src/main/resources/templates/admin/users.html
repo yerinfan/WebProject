@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<title>사용자 관리</title>
+<link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+
+	<h1>사용자 관리</h1>
+	<table>
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Username</th>
+				<th>현재 권한</th>
+				<th>권한 변경</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr th:each="u : ${users}">
+				<td th:text="${u.id}">1</td>
+				<td th:text="${u.username}">username</td>
+				<td th:text="${u.role}">USER</td>
+				<td>
+					<div class="actions">
+						<form th:action="@{/admin/users/{id}/role(id=${u.id})}"
+							method="post">
+							<input type="hidden" th:name="${_csrf.parameterName}"
+								th:value="${_csrf.token}" /> <select name="role">
+								<option th:each="r : ${T(kr.ac.kopo.model.Role).values()}"
+									th:value="${r}" th:text="${r}"
+									th:selected="${r.equals(u.role)}"></option>
+							</select>
+							<button type="submit" class="btn-update">변경</button>
+						</form>
+
+						<form th:action="@{|/admin/users/${u.id}/delete|}" method="post">
+							<input type="hidden" th:name="${_csrf.parameterName}"
+								th:value="${_csrf.token}" />
+							<button type="submit" class="btn-delete"
+								onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+						</form>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+			<h2>얼굴 등록 사용자</h2>
+	<table>
+		<thead>
+			<tr>
+				<th>Username</th>
+				<th>상태</th>
+				<th>관리</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr th:each="username : ${faceUsers}">
+				<td th:text="${username}">yeun</td>
+				<td>등록됨</td>
+				<td>
+					<form th:action="@{/admin/users/face-delete}" method="post"
+						  onsubmit="return confirm('정말 삭제하시겠습니까?');">
+						<input type="hidden" name="username" th:value="${username}" />
+						<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+						<button type="submit" class="btn-delete">인코딩 삭제</button>
+					</form>
+				</td>
+			</tr>
+			<tr th:if="${faceUsers.size() == 0}">
+				<td colspan="3">등록된 얼굴 사용자가 없습니다.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	
+	
+	<a th:href="@{/admin/rooms}">← 방 관리로</a>
+	<hr>
+	<a th:href="@{/rooms}">← 방 목록</a>
+</body>
+</html>

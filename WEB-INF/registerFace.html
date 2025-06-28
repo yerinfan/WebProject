@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>얼굴 등록</title>
+</head>
+<body>
+  <h2>얼굴 등록</h2>
+
+  <label>사용자 이름: <input type="text" id="username" /></label>
+  <br><br>
+
+  <video id="video" width="300" autoplay></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <br>
+  <button id="startBtn">등록 시작</button>
+
+  <div id="status" style="color: green;"></div>
+  <div id="failMessage" style="color: red; display: none;">
+    얼굴을 인식하지 못했습니다. <a href="/signup">다시 시도하기</a>
+  </div>
+
+  <script>
+    let video = document.getElementById("video");
+    let canvas = document.getElementById("canvas");
+    let startBtn = document.getElementById("startBtn");
+    let statusDiv = document.getElementById("status");
+    let failMessage = document.getElementById("failMessage");
+
+    let capturedCount = 0;
+    let capturedImages = [];
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("웹캠 접근 실패: " + err.message);
+      });
+
+    startBtn.onclick = () => {
+      const username = document.getElementById("username").value.trim();
+      if (!username) {
+        alert("이름을 입력하세요");
+        return;
+      }
+
+      statusDiv.innerText = "얼굴 인식 중...";
+
+      const intervalId = setInterval(() => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg");
+
+        // Flask에 얼굴 있는지 확인
+        fetch("/face/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: imageData })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.hasFace) {
+            capturedImages.push(imageData);
+            capturedCount++;
+            statusDiv.innerText = `${capturedCount}장 캡처됨`;
+
+            if (capturedCount >= 3) {
+              clearInterval(intervalId);
+
+              // 최종 전송
+              fetch("/register-face", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: username, images: capturedImages })
+              })
+              .then(res => res.json())
+              .then(result => {
+                if (result.success) {
+                  alert("얼굴 등록 완료!");
+                  window.location.href = "/login?registeredFace=true";
+                } else {
+                  failMessage.style.display = "block";
+                }
+              });
+            }
+          }
+        });
+      }, 1000); // 1초마다 시도
+
+      // 실패 처리 타이머
+      setTimeout(() => {
+        if (capturedCount === 0) {
+          clearInterval(intervalId);
+          failMessage.style.display = "block";
+        }
+      }, 10000); // 10초 안에 얼굴 못 찾으면 실패
+    };
+  </script>
+</body>
+</html>

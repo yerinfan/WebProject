@@ -1,0 +1,61 @@
+<body>
+  <h2>얼굴로 로그인</h2>
+  <video id="video" autoplay width="300"></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+
+  <div id="failMessage" style="display:none; color:red;">
+    얼굴을 인식하지 못했습니다.<br>
+    <a href="/login">아이디와 비밀번호로 로그인하기</a>
+  </div>
+
+  <script>
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        document.getElementById('video').srcObject = stream;
+        startFaceRecognition();  // 웹캠이 열리면 얼굴 인식 시작
+      })
+      .catch(err => {
+        alert("웹캠 오류: " + err.message);
+      });
+
+    let matched = false;
+    let failTimeout;
+
+    const startFaceRecognition = () => {
+      const canvas = document.getElementById("canvas");
+      const video = document.getElementById("video");
+
+      const intervalId = setInterval(() => {
+        if (matched) {
+          clearInterval(intervalId);
+          return;
+        }
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg");
+
+        fetch("/login/face", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: imageData })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            matched = true;
+            window.location.href = "/rooms";
+          }
+        });
+      }, 1000);
+
+      failTimeout = setTimeout(() => {
+        if (!matched) {
+          clearInterval(intervalId);
+          document.getElementById("failMessage").style.display = "block";
+        }
+      }, 10000); // 10초 후 실패 메시지 출력
+    };
+  </script>
+</body>

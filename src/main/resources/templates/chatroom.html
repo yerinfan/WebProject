@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<title th:text="${room.name} + ' – Chat Room'">Chat Room</title>
+<link rel="stylesheet" href="/css/chatrooms.css" />
+
+<!-- CSRF 토큰 -->
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<!-- SockJS, STOMP -->
+<script
+	src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<!-- 사용자 정의 chat.js (connect/sendMessage/addMessageToList) -->
+<script th:src="@{/js/chat.js}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mask = document.getElementById('codeMask');
+  const real = document.getElementById('realCode');
+  const btn  = document.getElementById('revealBtn');
+  btn.addEventListener('click', () => {
+    if (real.style.display === 'none') {
+      real.style.display = 'inline';
+      mask.style.display = 'none';
+      btn.textContent = 'Hide';
+    } else {
+      real.style.display = 'none';
+      mask.style.display = 'inline';
+      btn.textContent = 'Show';
+    }
+  });
+});
+</script>
+</head>
+<body>
+	<div class="chat-container">
+		<h1 th:text="${room.name}">Room Name</h1>
+		<div class="invite-code">
+			Invite Code: <span class="code-mask" id="codeMask">●●●●●●●●</span>
+			<button class="reveal-btn" id="revealBtn">Show</button>
+			<span class="real-code" id="realCode" th:text="${room.inviteCode}"
+				style="display: none;"></span>
+		</div>
+		<input type="hidden" id="roomId" th:value="${room.id}" />
+
+		<!-- 1) 채팅 내역 -->
+		<div id="messages">
+			<div th:each="msg, stat : ${messages}">
+				<!-- 날짜 구분선 출력 -->
+				<div
+					th:if="${stat.index == 0 or #temporals.format(messages[stat.index].timestamp, 'yyyy-MM-dd') != #temporals.format(messages[stat.index - 1].timestamp, 'yyyy-MM-dd')}"
+					class="date-separator">
+					<span th:text="${#temporals.format(msg.timestamp, 'yyyy-MM-dd')}">2025-06-16</span>
+				</div>
+
+				<!-- 메시지 말풍선 -->
+				<div class="message-bubble">
+					<div class="meta">
+						<strong th:text="${msg.sender.username}">sender</strong> <span
+							class="timestamp"
+							th:text="${#temporals.format(msg.timestamp, 'HH:mm')}">17:30</span>
+					</div>
+					<div th:if="${msg.type == 'CHAT'}" class="bubble-text"
+						th:text="${msg.content}">채팅내용</div>
+					<img th:if="${msg.type == 'IMAGE'}" th:src="@{${msg.content}}"
+						class="bubble-image" />
+				</div>
+			</div>
+		</div>
+
+		<!-- 2) 입력 및 컨트롤 -->
+		<div
+			style="margin-top: 1em; display: flex; align-items: center; gap: 0.5em;">
+			<!-- 메시지 입력 -->
+			<input type="text" id="messageInput" placeholder="Type a message..."
+				autocomplete="off" style="flex: 1;" />
+
+			<!-- 전송 -->
+			<button id="sendBtn">Send</button>
+
+			<!-- 네이버 검색 -->
+			<button id="naverSearchBtn">네이버 검색</button>
+		</div>
+
+		<!-- 3) 이미지 업로드 -->
+		<form th:action="@{|/rooms/${room.id}/images|}" method="post"
+			enctype="multipart/form-data"
+			style="margin-top: 0.5em; display: flex; align-items: center; gap: 0.5em;">
+			<input type="file" name="file" accept="image/*" />
+			<button type="submit">이미지 업로드</button>
+		</form>
+
+		<!-- 4) 네이버 검색 결과 -->
+		<ul id="naverResults"
+			style="list-style: none; padding: 0; margin-top: 0.5em; max-height: 200px; overflow-y: auto; border: 1px solid #eee;">
+			<!-- JS로 채워 넣음 -->
+		</ul>
+
+		<!-- 5) 메모 팝업 오버레이 -->
+		<div id="canvas-overlay" style="display: none;">
+			<div class="canvas-modal">
+				<button id="close-canvas">닫기</button>
+
+				<!-- + 새로운 메모 버튼 -->
+				<button id="add-canvas" style="font-size: 1.2em;">＋ 새로운 메모</button>
+
+				<!-- 과거 메모 선택 드롭다운 -->
+				<div style="margin-top: 1em;">
+					<label> 이전 메모 선택: <select id="notesSelect">
+							<option value="">-- 선택하세요 --</option>
+							<option th:each="n : ${notes}" th:value="${n.id}"
+								th:text="${#temporals.format(n.updatedAt,'yyyy-MM-dd HH:mm')}">
+								2025-06-14 12:34</option>
+					</select>
+					</label>
+				</div>
+				<!-- (1) preview 영역 -->
+				<div id="noteDetailArea" style="display: none; margin-top: .5em;">
+					<textarea id="canvasNoteView" rows="4" cols="60" readonly></textarea>
+					<br />
+					<button id="editNoteBtn">수정</button>
+				</div>
+
+				<!-- ★ 과거 메모 리스트를 렌더링할 부분 -->
+				<ul id="notesList"
+					style="list-style: none; padding: 0; margin-top: 1em; max-height: 200px; overflow-y: auto; border-top: 1px solid #ddd;">
+					<!-- JS로 새로 저장된 메모를 prepend 합니다 -->
+					<li th:each="n : ${notes}" th:attr="data-id=${n.id}"
+						style="padding: 0.5em 0; border-bottom: 1px solid #eee;"><small
+						th:text="${#temporals.format(n.updatedAt,'yyyy-MM-dd HH:mm')}">날짜</small>
+						— <span th:text="${n.note}">메모 내용</span></li>
+				</ul>
+
+				<!-- (2) edit 영역 -->
+				<div id="newNoteArea" style="display: none; margin-top: 1em;">
+					<textarea id="canvasNoteInput" rows="4" cols="60"
+						placeholder="메모를 입력하세요"></textarea>
+					<br />
+					<button id="saveNoteBtn">메모 저장</button>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- 6) 메모 토글 & 로그아웃 -->
+		<div
+			style="margin-top: 1em; display: flex; gap: 1em; align-items: center;">
+			<button id="toggle-canvas">메모 보기</button>
+			<a th:href="@{/rooms}">← 방 목록</a>
+			<!-- 올바른 예: POST 폼 -->
+			<form th:action="@{/logout}" th:method="post" style="display: inline">
+				<input type="hidden" th:name="${_csrf.parameterName}"
+					th:value="${_csrf.token}" />
+				<button type="submit"
+					style="background: none; border: none; padding: 0; color: #00f; cursor: pointer">
+					로그아웃</button>
+			</form>
+		</div>
+
+		<!-- 7) 공통 스크립트 바인딩 -->
+		<script th:inline="javascript">
+		
+		function scrollToBottom() {
+			  const messagesDiv = document.getElementById('messages');
+			  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+			}
+		
+document.addEventListener('DOMContentLoaded', () => {
+  let editingNoteId = null;
+
+  // Thymeleaf에서 notes, roomId, csrfToken, csrfHeader, author를 주입
+  const notes      = /*[[${notes}]]*/ [];
+  const roomId     = /*[[${room.id}]]*/ 0;
+  const csrfToken  = /*[[${_csrf.token}]]*/ '';
+  const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+  const author     = /*[[${#authentication.name}]]*/ 'anonymous';
+
+  // (A) <li> 요소 생성 함수
+  function createNoteLi(note) {
+    const li = document.createElement('li');
+    li.dataset.id = note.id;
+    li.style.padding = '0.5em 0';
+    li.style.borderBottom = '1px solid #ddd';
+    const dt = new Date(note.updatedAt).toISOString().slice(0, 16).replace('T', ' ');
+    li.textContent = `${dt} — ${note.note}`;
+    return li;
+  }
+
+  // 1) 웹소켓 연결
+  connect(roomId);
+
+  // 2) 메시지 전송
+  document.getElementById('sendBtn')
+    .addEventListener('click', () => {
+      const content = document.getElementById('messageInput').value.trim();
+      if (!content) return;
+      sendMessage(roomId, author, content);
+      document.getElementById('messageInput').value = '';
+    });
+
+  document.getElementById('messageInput')
+  .addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // 줄바꿈 방지
+      document.getElementById('sendBtn').click(); // 버튼 클릭과 동일하게 실행
+    }
+  });
+  
+  // 3) 네이버 검색
+  document.getElementById('naverSearchBtn')
+    .addEventListener('click', () => {
+      const q = document.getElementById('messageInput').value.trim();
+      if (!q) return alert('검색어를 입력하세요');
+      fetch(`/api/naver/search?query=${encodeURIComponent(q)}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+        .then(items => {
+          const ul = document.getElementById('naverResults');
+          ul.innerHTML = '';
+          items.forEach(item => {
+            const li = document.createElement('li');
+            const plain = item.title.replace(/<[^>]+>/g, '');
+            li.textContent = `${plain} (${item.link})`;
+            ul.appendChild(li);
+          });
+        })
+        .catch(err => alert('검색 실패: ' + err));
+    });
+
+  // 4) 메모 오버레이 열기/닫기
+  document.getElementById('toggle-canvas')
+    .addEventListener('click', () => {
+      document.getElementById('canvas-overlay').style.display = 'block';
+    });
+  document.getElementById('close-canvas')
+    .addEventListener('click', () => {
+      document.getElementById('canvas-overlay').style.display = 'none';
+    });
+
+  // 5) 새로운 메모 작성
+  document.getElementById('add-canvas')
+    .addEventListener('click', () => {
+      editingNoteId = null;
+      document.getElementById('saveNoteBtn').textContent = '메모 저장';
+      document.getElementById('newNoteArea').style.display = 'block';
+      document.getElementById('notesSelect').value = '';
+      document.getElementById('noteDetailArea').style.display = 'none';
+    });
+
+  // 6) 메모 선택 → 미리보기
+  document.getElementById('notesSelect')
+    .addEventListener('change', e => {
+      const id = e.target.value;
+      const detailArea = document.getElementById('noteDetailArea');
+      if (!id) {
+        detailArea.style.display = 'none';
+        return;
+      }
+      const note = notes.find(n => String(n.id) === id);
+      document.getElementById('canvasNoteView').value = note ? note.note : '';
+      detailArea.style.display = 'block';
+      document.getElementById('newNoteArea').style.display = 'none';
+    });
+
+  // 7) 수정 버튼 → 수정 모드 진입
+  document.getElementById('editNoteBtn')
+    .addEventListener('click', () => {
+      const selId = document.getElementById('notesSelect').value;
+      if (!selId) return alert('수정할 메모를 선택하세요');
+      const note = notes.find(n => String(n.id) === selId);
+      if (!note) return alert('메모를 불러올 수 없습니다');
+      editingNoteId = selId;
+      document.getElementById('noteDetailArea').style.display = 'none';
+      document.getElementById('newNoteArea').style.display = 'block';
+      document.getElementById('saveNoteBtn').textContent = '수정 저장';
+      document.getElementById('canvasNoteInput').value = note.note;
+    });
+
+  // 8) 메모 저장/수정
+  document.getElementById('saveNoteBtn')
+    .addEventListener('click', () => {
+      const content = document.getElementById('canvasNoteInput').value.trim();
+      if (!content) return alert('메모를 입력하세요');
+
+      const method = editingNoteId ? 'PUT' : 'POST';
+      const url = editingNoteId
+        ? `/rooms/${roomId}/notes/${editingNoteId}`
+        : `/rooms/${roomId}/notes`;
+
+      fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          [csrfHeader]: csrfToken
+        },
+        body: new URLSearchParams({ note: content })
+      })
+      .then(r => r.ok ? r.json() : Promise.reject('저장 실패'))
+      .then(note => {
+        const ul  = document.getElementById('notesList');
+        const sel = document.getElementById('notesSelect');
+        const dt = new Date(note.updatedAt).toISOString().slice(0, 16).replace('T', ' ');
+
+        if (editingNoteId) {
+          // 기존 수정
+          const li  = ul.querySelector(`li[data-id="${note.id}"]`);
+          const opt = sel.querySelector(`option[value="${note.id}"]`);
+          if (li) li.textContent = `${dt} — ${note.note}`;
+          if (opt) opt.text = dt;
+          const idx = notes.findIndex(n => String(n.id) === String(note.id));
+          if (idx > -1) notes[idx] = note;
+        } else {
+          // 새 메모
+          ul.prepend(createNoteLi(note));
+          const option = document.createElement('option');
+          option.value = note.id;
+          option.text  = dt;
+          sel.appendChild(option);
+          notes.push(note);
+        }
+
+        editingNoteId = null;
+        document.getElementById('saveNoteBtn').textContent = '메모 저장';
+        document.getElementById('canvasNoteInput').value = '';
+        document.getElementById('newNoteArea').style.display = 'none';
+      })
+      .catch(err => alert(err));
+    });
+  
+  scrollToBottom();
+});
+
+
+</script>
+
+	</div>
+</body>
+</html>

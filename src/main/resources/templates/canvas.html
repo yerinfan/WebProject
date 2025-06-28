@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${room.name} + ' 캔버스'">Canvas</title>
+</head>
+<body>
+  <h1 th:text="${room.name} + ' 캔버스'">Canvas</h1>
+
+  <ul>
+    <li th:each="note : ${notes}"
+        th:text="${note.note} + ' (' + ${#temporals.format(note.updatedAt, 'HH:mm:ss')} + ')'">
+    </li>
+  </ul>
+
+  <form th:action="@{|/rooms/${room.id}/canvas/add|}" method="post">
+    <textarea name="note" placeholder="메모를 입력하세요" required></textarea>
+    <button type="submit">메모 추가</button>
+  </form>
+
+  <p><a th:href="@{/rooms}">← 채팅방 목록으로</a></p>
+</body>
+</html>
