@@ -9,7 +9,7 @@
   </div>
 
 <script>
-  const flaskUrl = "https://your-flask-url/face/login"; // ← 여기에 Flask 주소
+  const flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
 
   navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
@@ -21,6 +21,19 @@
     });
 
   let matched = false;
+
+  function dataURItoBlob(dataURI) {
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ab], { type: mimeString });
+  }
 
   const startFaceRecognition = () => {
     const canvas = document.getElementById("canvas");
@@ -36,19 +49,16 @@
       canvas.height = video.videoHeight;
       canvas.getContext("2d").drawImage(video, 0, 0);
       const imageData = canvas.toDataURL("image/jpeg");
+      const blob = dataURItoBlob(imageData);
+
+      const formData = new FormData();
+      formData.append("image", blob, "face.jpg");
 
       fetch(flaskUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageData })
+        body: formData
       })
-      .then(async res => {
-        const contentType = res.headers.get("content-type");
-        if (!res.ok || !contentType || !contentType.includes("application/json")) {
-          throw new Error("서버 응답 오류: JSON 형식이 아닙니다");
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (data.success) {
           matched = true;
@@ -72,5 +82,4 @@
     }, 10000);
   };
 </script>
-
 </body>
