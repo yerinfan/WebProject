@@ -32,15 +32,16 @@ public class User {
     private Set<ChatRoom> rooms = new HashSet<>();
     
     @Column(name = "FACE_REGISTERED")
-    private boolean faceRegistered = false;
+    private Boolean faceRegistered = false;
 
-    public boolean isFaceRegistered() {
+    public Boolean getFaceRegistered() {
         return faceRegistered;
     }
 
-    public void setFaceRegistered(boolean faceRegistered) {
+    public void setFaceRegistered(Boolean faceRegistered) {
         this.faceRegistered = faceRegistered;
     }
+
 
     public Set<ChatRoom> getRooms() {
         return rooms;
