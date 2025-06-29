@@ -78,7 +78,7 @@
               });
             }
             matched = true;
-
+            console.log("Spring 응답 상태:", res.status);  // ← 로그 확인
             // ✅ 성공 메시지와 버튼 표시
             document.getElementById("failMessage").innerHTML = `
               <span style="color:green;">얼굴 로그인 성공!<br>
