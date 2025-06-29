@@ -17,27 +17,29 @@ public class FaceAuthService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private static final String FLASK_SERVER_URL = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev";
+
     public FaceAuthResult verifyFace(String base64Image) {
         Map<String, String> request = new HashMap<>();
         request.put("image", base64Image);
 
         try {
             ResponseEntity<FaceAuthResult> response = restTemplate.postForEntity(
-                "http://localhost:5000/verify-face", request, FaceAuthResult.class);
+                FLASK_SERVER_URL + "/verify-face", request, FaceAuthResult.class);
             return response.getBody();
         } catch (Exception e) {
             return new FaceAuthResult(false, "서버 오류: " + e.getMessage(), null);
         }
     }
-    
+
     public FaceAuthResult registerFace(String username, List<String> images) {
         Map<String, Object> request = new HashMap<>();
         request.put("username", username);
-        request.put("images", images);  // ★ 반드시 List로 보내야 함
+        request.put("images", images); // Base64 문자열 리스트
 
         try {
             ResponseEntity<FaceAuthResult> response = restTemplate.postForEntity(
-                "http://localhost:5000/register-face",
+                FLASK_SERVER_URL + "/register-face",
                 request,
                 FaceAuthResult.class
             );
@@ -47,8 +49,7 @@ public class FaceAuthService {
         }
     }
 
-
-    // ✅ 회원 얼굴 여러 장 등록용 메서드 추가
+    // ✅ 회원 얼굴 여러 장 등록용 메서드
     public FaceAuthResult registerMultipleImages(String username, List<String> images) {
         Map<String, Object> request = new HashMap<>();
         request.put("username", username);
@@ -61,7 +62,7 @@ public class FaceAuthService {
 
         try {
             ResponseEntity<FaceAuthResult> response = restTemplate.postForEntity(
-                "http://localhost:5000/register-face", entity, FaceAuthResult.class);
+                FLASK_SERVER_URL + "/register-face", entity, FaceAuthResult.class);
             return response.getBody();
         } catch (Exception e) {
             return new FaceAuthResult(false, "등록 실패: " + e.getMessage(), null);
