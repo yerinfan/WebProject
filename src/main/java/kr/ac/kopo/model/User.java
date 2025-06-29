@@ -30,6 +30,17 @@ public class User {
     @ManyToMany(mappedBy = "participants")
     @JsonBackReference
     private Set<ChatRoom> rooms = new HashSet<>();
+    
+    @Column(name = "FACE_REGISTERED")
+    private boolean faceRegistered = false;
+
+    public boolean isFaceRegistered() {
+        return faceRegistered;
+    }
+
+    public void setFaceRegistered(boolean faceRegistered) {
+        this.faceRegistered = faceRegistered;
+    }
 
     public Set<ChatRoom> getRooms() {
         return rooms;

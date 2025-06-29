@@ -1,12 +1,14 @@
 package kr.ac.kopo.controller;
 
 import kr.ac.kopo.dto.FaceRegisterRequestDTO;
+import kr.ac.kopo.model.User;
+import kr.ac.kopo.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -14,9 +16,12 @@ public class FaceAuthController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping("/register-face")
     public ResponseEntity<Map<String, Object>> registerFace(@RequestBody FaceRegisterRequestDTO dto) {
-        String flaskUrl = "http://localhost:5000/register-face";
+        String flaskUrl = "http://localhost:5000/register-face"; // 실제 Flask 서버 주소로 교체 필요
 
         // Flask 서버로 전달할 요청 JSON 구성
         Map<String, Object> payload = new HashMap<>();
@@ -30,6 +35,16 @@ public class FaceAuthController {
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(flaskUrl, entity, Map.class);
+
+            // Flask에서 등록 성공시 DB에 얼굴 등록 여부 true로 반영
+            if (response.getBody() != null && Boolean.TRUE.equals(response.getBody().get("success"))) {
+                User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
+                if (user != null) {
+                    user.setFaceRegistered(true);
+                    userRepository.save(user);
+                }
+            }
+
             return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
