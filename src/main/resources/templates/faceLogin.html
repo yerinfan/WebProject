@@ -7,7 +7,7 @@
 		얼굴을 인식하지 못했습니다.<br> <a href="/login">아이디와 비밀번호로 로그인하기</a>
 	</div>
 
-	<script>
+<script>
   const flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
   const springSessionUrl = "/face-login-success";
 
@@ -56,41 +56,44 @@
         method: "POST",
         body: formData
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          return fetch(springSessionUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ username: data.user })
-          });
-        } else {
-          console.log("⚠️ 얼굴 인식 실패:", data.message);
-          throw new Error("얼굴 인식 실패");
-        }
-      })
-      .then(res => {
-		  if (!res.ok) {
-		    return res.text().then(text => {
-		      throw new Error("Spring 서버 로그인 실패: " + text);
-		    });
-		  }
-		  matched = true;
-		  window.location.href = "/rooms";
-		})
-		.catch(err => {
-		  console.error("❌ 얼굴 로그인 오류:", err.message);
-		  clearInterval(intervalId);
-		  document.getElementById("failMessage").style.display = "block";
-		});
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            return fetch(springSessionUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ username: data.user })
+            });
+          } else {
+            console.log("⚠️ 얼굴 인식 실패:", data.message);
+            throw new Error("얼굴 인식 실패");
+          }
+        })
+        .then(res => {
+          if (!res.ok) {
+            return res.text().then(text => {
+              throw new Error("Spring 서버 로그인 실패: " + text);
+            });
+          }
+          matched = true;
+          window.location.href = "/rooms";
+        })
+        .catch(err => {
+          console.error("❌ 얼굴 로그인 오류:", err.message);
+          clearInterval(intervalId);
+          document.getElementById("failMessage").style.display = "block";
+        });
 
-    setTimeout(() => {
-      if (!matched) {
-        clearInterval(intervalId);
-        document.getElementById("failMessage").style.display = "block";
-      }
-    }, 10000);
+      // 타임아웃
+      setTimeout(() => {
+        if (!matched) {
+          clearInterval(intervalId);
+          document.getElementById("failMessage").style.display = "block";
+        }
+      }, 10000);
+    }, 1000);
   };
 </script>
+
 </body>
