@@ -33,13 +33,16 @@ public class FaceAuthController {
     private UserRepository userRepository;
 
     @PostMapping("/face-login-success")
-    public ResponseEntity<?> faceLoginSuccess(@RequestBody Map<String, String> body,
+    public ResponseEntity<Map<String, Object>> faceLoginSuccess(@RequestBody Map<String, String> body,
                                               HttpServletRequest request) {
         String username = body.get("username");
 
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            Map<String, Object> res = new HashMap<>();
+            res.put("success", false);
+            res.put("message", "User not found");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
         }
 
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
@@ -54,7 +57,6 @@ public class FaceAuthController {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authToken);
 
-        // ✅ 기존 세션 무효화 후 새 세션 발급
         request.getSession().invalidate();
         HttpSession newSession = request.getSession(true);
         newSession.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
@@ -62,7 +64,13 @@ public class FaceAuthController {
         log.info("👤 얼굴 로그인 성공: {}", username);
         log.info("👉 세션 ID: {}", newSession.getId());
 
-        return ResponseEntity.ok().build();
+        // ✅ JSON 응답 추가
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "세션 로그인 완료");
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
 
