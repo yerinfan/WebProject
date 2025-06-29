@@ -32,17 +32,15 @@ public class FaceAuthController {
     private UserRepository userRepository;
 
     @PostMapping("/face-login-success")
-    public ResponseEntity<?> faceLoginSuccess(@RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<?> faceLoginSuccess(@RequestBody Map<String, String> body,
+                                              HttpServletRequest request) {
         String username = body.get("username");
 
-        // ✅ 사용자 확인
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
-            log.warn("❌ 얼굴 로그인 실패 - 사용자 없음: {}", username);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
         }
 
-        // ✅ Spring Security 인증 객체 생성
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword() != null ? user.getPassword() : "",
@@ -52,17 +50,20 @@ public class FaceAuthController {
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-        // ✅ SecurityContext 설정 및 세션에 저장
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authToken);
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+
+        // ✅ 기존 세션 무효화 후 새 세션 발급
+        request.getSession().invalidate();
+        HttpSession newSession = request.getSession(true);
+        newSession.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
         log.info("👤 얼굴 로그인 성공: {}", username);
-        log.info("👉 세션 ID: {}", session.getId());
-        log.info("👉 SecurityContext 저장됨: {}", context.getAuthentication().getName());
+        log.info("👉 세션 ID: {}", newSession.getId());
 
         return ResponseEntity.ok().build();
     }
+
 
     @PostMapping("/register-face")
     public ResponseEntity<Map<String, Object>> registerFace(@RequestBody FaceRegisterRequestDTO dto) {
