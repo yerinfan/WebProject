@@ -21,7 +21,7 @@ import kr.ac.kopo.resource.MultipartInputStreamFileResource;
 public class ProxyController {
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String flaskBaseUrl = "http://localhost:5000/face";
+    private final String flaskBaseUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face";
 
     @PostMapping("/login")
     public ResponseEntity<String> proxyFaceLogin(@RequestParam("image") MultipartFile file) {
