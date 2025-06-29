@@ -11,11 +11,11 @@ import jakarta.persistence.*;
 @Table(name = "USERS")
 public class User {
 
-    @Id
-    @SequenceGenerator(name = "userSeqGen", sequenceName = "SEQ_USERS", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "userSeqGen")
-    @Column(name = "ID")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "ID")
+	private Long id;
+
 
     @Column(name = "USERNAME", nullable = false, unique = true)
     private String username;
