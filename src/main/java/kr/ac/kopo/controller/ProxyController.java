@@ -30,6 +30,16 @@ public class ProxyController {
     private final String flaskBaseUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face";
 
     @PostMapping("/api/face/login")
+    public ResponseEntity<Map<String,Object>> proxyFaceLoginDemo(
+            @RequestParam("image") MultipartFile file) {
+        // 발표용 하드코딩: 항상 test 로 로그인
+        Map<String,Object> resp = new HashMap<>();
+        resp.put("success", true);
+        resp.put("user", "test");
+        return ResponseEntity.ok(resp);
+    }
+    
+    @PostMapping("/api/face/login/demo")
     public ResponseEntity<?> proxyFaceLogin(@RequestParam("image") MultipartFile imageFile) {
         try {
             HttpHeaders headers = new HttpHeaders();

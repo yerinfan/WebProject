@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -173,36 +174,52 @@ public class ChatRoomController {
         return "redirect:/rooms/" + roomId;
     }
 
-    @PutMapping("/{roomId}/notes/{noteId}")
+    // 1) 메모 수정
+    @PutMapping(path = "/{roomId}/notes/{noteId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public CanvasNote updateNote(@PathVariable("roomId") Long roomId,
-                                 @PathVariable("noteId") Long noteId,
-                                 @RequestParam("note") String newText,
-                                 Principal principal) {
-        roomRepo.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Invalid room: " + roomId));
+    public NoteDTO updateNote(
+            @PathVariable Long roomId,
+            @PathVariable Long noteId,
+            @RequestParam("note") String newText,
+            Principal principal) {
 
+        // 방 존재 여부 확인
+        roomRepo.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid room: " + roomId));
+
+        // 메모 조회
         CanvasNote note = canvasRepo.findByIdAndRoomId(noteId, roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid note: " + noteId));
 
+        // 수정 후 저장
         note.setNote(newText);
         note.setUpdatedAt(LocalDateTime.now());
-        return canvasRepo.save(note);
+        CanvasNote saved = canvasRepo.save(note);
+
+        // DTO로 변환하여 반환
+        return new NoteDTO(saved.getId(), saved.getNote(), saved.getUpdatedAt());
     }
 
-    @PostMapping("/{roomId}/notes")
+    // 2) 메모 생성
+    @PostMapping(path = "/{roomId}/notes", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public CanvasNote createNote(@PathVariable("roomId") Long roomId,
-                                  @RequestParam("note") String content,
-                                  Principal principal) {
-        ChatRoom room = roomRepo.findById(roomId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid room: " + roomId));
+    public NoteDTO createNote(
+            @PathVariable Long roomId,
+            @RequestParam("note") String content,
+            Principal principal) {
 
+        // 방 존재 여부 확인
+        ChatRoom room = roomRepo.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid room: " + roomId));
+
+        // 새 메모 생성
         CanvasNote note = new CanvasNote();
         note.setRoom(room);
         note.setNote(content);
         note.setUpdatedAt(LocalDateTime.now());
 
-        return canvasRepo.save(note);
+        CanvasNote saved = canvasRepo.save(note);
+        return new NoteDTO(saved.getId(), saved.getNote(), saved.getUpdatedAt());
     }
 
     @PostMapping("/{roomId}/delete")
