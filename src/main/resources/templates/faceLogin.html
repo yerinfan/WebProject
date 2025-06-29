@@ -12,7 +12,7 @@
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         document.getElementById('video').srcObject = stream;
-        startFaceRecognition();
+        startFaceRecognition();  // 웹캠이 열리면 얼굴 인식 시작
       })
       .catch(err => {
         alert("웹캠 오류: " + err.message);
@@ -36,8 +36,7 @@
         canvas.getContext("2d").drawImage(video, 0, 0);
         const imageData = canvas.toDataURL("image/jpeg");
 
-        // ✅ 수정된 서버 주소 사용
-        fetch("https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/login/face", {
+        fetch("/login/face", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: imageData })
@@ -56,7 +55,7 @@
           clearInterval(intervalId);
           document.getElementById("failMessage").style.display = "block";
         }
-      }, 10000);
+      }, 10000); // 10초 후 실패 메시지 출력
     };
   </script>
 </body>
