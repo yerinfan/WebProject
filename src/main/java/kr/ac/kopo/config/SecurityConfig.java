@@ -42,8 +42,9 @@ public class SecurityConfig {
             	    .requestMatchers(HttpMethod.POST, "/login/face").permitAll()
             	    .requestMatchers("/register-face").permitAll()
             	    .requestMatchers(HttpMethod.POST, "/register-face").permitAll()
-            	    .requestMatchers("/face-login-success").permitAll() // ✅ 얼굴 로그인 세션 생성 허용
-            	    .requestMatchers(HttpMethod.POST, "/face-login-success").permitAll() // POST도 허용
+            	    .requestMatchers("/face-login-success").permitAll()
+            	    .requestMatchers(HttpMethod.POST, "/face-login-success").permitAll()
+            	    .requestMatchers("/api/face/**").permitAll() // ✅ 이 줄을 추가하세요!
             	    .requestMatchers("/h2-console/**").permitAll()
             	    .requestMatchers("/admin/**").hasRole("ADMIN")
             	    .anyRequest().authenticated()
