@@ -9,17 +9,18 @@
   </div>
 
 <script>
+  const flaskUrl = "https://your-flask-url/face/login"; // ← 여기에 Flask 주소
+
   navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
       document.getElementById('video').srcObject = stream;
-      startFaceRecognition();  // 웹캠이 열리면 얼굴 인식 시작
+      startFaceRecognition();  // 웹캠 열리면 얼굴 인식 시작
     })
     .catch(err => {
       alert("웹캠 오류: " + err.message);
     });
 
   let matched = false;
-  let failTimeout;
 
   const startFaceRecognition = () => {
     const canvas = document.getElementById("canvas");
@@ -36,7 +37,7 @@
       canvas.getContext("2d").drawImage(video, 0, 0);
       const imageData = canvas.toDataURL("image/jpeg");
 
-      fetch("/login/face", {
+      fetch(flaskUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: imageData })
@@ -52,22 +53,23 @@
         if (data.success) {
           matched = true;
           window.location.href = "/rooms";
+        } else {
+          console.log("⚠️ 얼굴 인식 실패:", data.message);
         }
       })
       .catch(err => {
         console.error("❌ 얼굴 로그인 오류:", err);
-        // 서버 오류 등으로 중단 시도 가능
         clearInterval(intervalId);
         document.getElementById("failMessage").style.display = "block";
       });
     }, 1000);
 
-    failTimeout = setTimeout(() => {
+    setTimeout(() => {
       if (!matched) {
         clearInterval(intervalId);
         document.getElementById("failMessage").style.display = "block";
       }
-    }, 10000); // 10초 후 실패 메시지 출력
+    }, 10000);
   };
 </script>
 
