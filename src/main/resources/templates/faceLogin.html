@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>얼굴로 로그인</title>
-  <!-- CSRF 토큰 메타 -->
+  <!-- CSRF 토큰 -->
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <style>
@@ -20,22 +20,16 @@
   <div id="message" style="margin-top: 1em;"></div>
 
   <script>
-    // Spring 세션 인증 엔드포인트
     const springSessionUrl = "/face-login-success";
-
-    // CSRF 토큰 & 헤더 이름
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+    const video      = document.getElementById('video');
+    const status     = document.getElementById('status');
+    const message    = document.getElementById('message');
 
-    const video = document.getElementById('video');
-    const status = document.getElementById('status');
-    const message = document.getElementById('message');
-
-    // 웹캠 스트림 획득
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
-        // 카메라 준비되면 곧바로 로그인 시도
         setTimeout(forceLogin, 1000);
       })
       .catch(err => {
@@ -51,31 +45,22 @@
           "Content-Type": "application/json",
           [csrfHeader]: csrfToken
         },
+        // test 계정으로 무조건 로그인
         body: JSON.stringify({ username: "test" })
       })
       .then(res => {
-        if (!res.ok) {
-          throw new Error("Spring 인증 실패: " + res.status);
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
+        if (res.ok) {
+          // HTTP 200 이면 성공 처리
           status.textContent = "";
           message.innerHTML = `
             <span style="color: green; font-weight: bold;">
               얼굴 로그인 성공!<br>
-              <a href="${data.role === 'ADMIN' ? '/admin/users' : '/rooms'}">
-                👉 ${data.role === 'ADMIN' ? '관리자 페이지로' : '채팅방으로 이동'}
-              </a>
+              <a href="/rooms">👉 채팅방으로 이동</a>
             </span>
           `;
-          // 2초 후 자동 리다이렉트
-          setTimeout(() => {
-            window.location.href = data.role === 'ADMIN' ? '/admin/users' : '/rooms';
-          }, 2000);
+          setTimeout(() => window.location.href = "/rooms", 2000);
         } else {
-          throw new Error(data.message || "로그인 실패");
+          throw new Error("Spring 인증 실패: " + res.status);
         }
       })
       .catch(err => {
