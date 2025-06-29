@@ -10,6 +10,8 @@
       width: 320px;
       height: 240px;
       border: 1px solid black;
+      display: block;
+      background-color: black;
     }
 
     #status {
@@ -22,7 +24,7 @@
   <h2>얼굴 등록</h2>
   <p>카메라를 응시해 주세요. 얼굴 3장을 자동으로 수집합니다.</p>
 
-  <video id="video" autoplay muted></video>
+  <video id="video" autoplay muted playsinline></video>
   <br />
   <button id="startBtn">등록 시작</button>
   <div id="status"></div>
@@ -50,7 +52,8 @@
       .then(stream => {
         video.srcObject = stream;
         video.onloadedmetadata = () => {
-          video.play();  // play() 명시 호출
+          video.play();
+          console.log("📷 video loaded:", video.videoWidth, video.videoHeight);
         };
       })
       .catch(err => {
@@ -71,12 +74,12 @@
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth || 320;
       canvas.height = video.videoHeight || 240;
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // 디버깅 시 아래 줄 주석 해제하여 캔버스 이미지 확인 가능
-      // document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = canvas.toDataURL('image/jpeg');
+      console.log("📸 캡처된 이미지 크기:", canvas.width, canvas.height);
 
       const hasFace = await checkFace(imageData);
       if (!hasFace) {
