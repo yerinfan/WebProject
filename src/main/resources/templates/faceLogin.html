@@ -1,14 +1,13 @@
 <body>
-  <h2>얼굴로 로그인</h2>
-  <video id="video" autoplay width="300"></video>
-  <canvas id="canvas" style="display: none;"></canvas>
+	<h2>얼굴로 로그인</h2>
+	<video id="video" autoplay width="300"></video>
+	<canvas id="canvas" style="display: none;"></canvas>
 
-  <div id="failMessage" style="display:none; color:red;">
-    얼굴을 인식하지 못했습니다.<br>
-    <a href="/login">아이디와 비밀번호로 로그인하기</a>
-  </div>
+	<div id="failMessage" style="display: none; color: red;">
+		얼굴을 인식하지 못했습니다.<br> <a href="/login">아이디와 비밀번호로 로그인하기</a>
+	</div>
 
-<script>
+	<script>
   const flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
   const springSessionUrl = "/face-login-success";
 
@@ -72,19 +71,19 @@
         }
       })
       .then(res => {
-        if (res.ok) {
-          matched = true;
-          window.location.href = "/rooms";
-        } else {
-          throw new Error("Spring 서버 로그인 실패");
-        }
-      })
-      .catch(err => {
-        console.error("❌ 얼굴 로그인 오류:", err);
-        clearInterval(intervalId);
-        document.getElementById("failMessage").style.display = "block";
-      });
-    }, 1000);
+		  if (!res.ok) {
+		    return res.text().then(text => {
+		      throw new Error("Spring 서버 로그인 실패: " + text);
+		    });
+		  }
+		  matched = true;
+		  window.location.href = "/rooms";
+		})
+		.catch(err => {
+		  console.error("❌ 얼굴 로그인 오류:", err.message);
+		  clearInterval(intervalId);
+		  document.getElementById("failMessage").style.display = "block";
+		});
 
     setTimeout(() => {
       if (!matched) {
