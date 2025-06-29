@@ -19,6 +19,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -26,85 +27,44 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 public class FaceAuthController {
 
-    private static final Logger log = LoggerFactory.getLogger(FaceAuthController.class);
-    private final RestTemplate restTemplate = new RestTemplate();
-
     @Autowired
     private UserRepository userRepository;
 
     @PostMapping("/face-login-success")
-    public ResponseEntity<Map<String, Object>> faceLoginSuccess(@RequestBody Map<String, String> body,
-                                              HttpServletRequest request) {
-        String username = body.get("username");
+    public ResponseEntity<Map<String, Object>> faceLoginSuccess(HttpServletRequest request) {
+        // 1) 강제로 로그인시킬 사용자 아이디
+        String forcedUsername = "test";
 
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null) {
-            Map<String, Object> res = new HashMap<>();
-            res.put("success", false);
-            res.put("message", "User not found");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res);
-        }
+        // 2) DB에서 test 유저 정보 꺼내오기
+        User user = userRepository.findByUsername(forcedUsername)
+                      .orElseThrow(() -> new UsernameNotFoundException(forcedUsername));
 
+        // 3) Spring Security 인증 토큰 생성
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword() != null ? user.getPassword() : "",
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+            user.getUsername(),
+            user.getPassword(),
+            List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
         );
-
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
+        // 4) SecurityContext에 넣고 세션 갱신
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authToken);
-
         request.getSession().invalidate();
         HttpSession newSession = request.getSession(true);
-        newSession.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+        newSession.setAttribute(
+            HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+            context
+        );
 
-        log.info("👤 얼굴 로그인 성공: {}", username);
-        log.info("👉 세션 ID: {}", newSession.getId());
-
-        // ✅ JSON 응답 추가
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "세션 로그인 완료");
+        // 5) JSON 응답
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("success", true);
+        resp.put("user", forcedUsername);
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(response);
+                             .contentType(MediaType.APPLICATION_JSON)
+                             .body(resp);
     }
 
-
-    @PostMapping("/register-face")
-    public ResponseEntity<Map<String, Object>> registerFace(@RequestBody FaceRegisterRequestDTO dto) {
-        String flaskUrl = "http://localhost:5000/register-face"; // 실제 Flask 서버 주소로 교체 필요
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("username", dto.getUsername());
-        payload.put("images", dto.getImages());
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-
-        try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(flaskUrl, entity, Map.class);
-
-            if (response.getBody() != null && Boolean.TRUE.equals(response.getBody().get("success"))) {
-                User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
-                if (user != null) {
-                    user.setFaceRegistered(true);
-                    userRepository.save(user);
-                    log.info("✅ 얼굴 등록 완료: {}", dto.getUsername());
-                }
-            }
-
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            log.error("❌ Flask 서버 오류: {}", e.getMessage());
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "Flask 서버 오류: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
 }
