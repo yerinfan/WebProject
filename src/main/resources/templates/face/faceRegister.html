@@ -22,7 +22,7 @@
   <h2>얼굴 등록</h2>
   <p>카메라를 응시해 주세요. 얼굴 3장을 자동으로 수집합니다.</p>
 
-  <video id="video" autoplay></video>
+  <video id="video" autoplay muted></video>
   <br />
   <button id="startBtn">등록 시작</button>
   <div id="status"></div>
@@ -44,12 +44,14 @@
     let faceCount = 0;
     const images = [];
 
-    // ✅ 실제 배포된 Replit Flask 서버 주소
     const flaskBaseUrl = 'https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev';
 
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();  // play() 명시 호출
+        };
       })
       .catch(err => {
         alert('카메라 사용 불가: ' + err);
@@ -70,6 +72,9 @@
       canvas.width = video.videoWidth || 320;
       canvas.height = video.videoHeight || 240;
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // 디버깅 시 아래 줄 주석 해제하여 캔버스 이미지 확인 가능
+      // document.body.appendChild(canvas);
 
       const imageData = canvas.toDataURL('image/jpeg');
 
