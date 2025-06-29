@@ -1,4 +1,4 @@
-// Package structure:
+	// Package structure:
 // src/main/java/kr/ac/kopo
 
 // 1. Main Application

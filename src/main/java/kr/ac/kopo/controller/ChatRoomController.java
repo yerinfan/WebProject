@@ -63,6 +63,11 @@ public class ChatRoomController {
     @GetMapping
     public String listMyRooms(Model model, Principal principal) {
         User me = userRepo.findByUsername(principal.getName()).orElseThrow();
+
+        // ✅ 세션/인증 확인 로그
+        System.out.println("🔐 현재 로그인 사용자: " + principal.getName());
+        System.out.println("👉 사용자 DB 정보: " + me.getUsername() + ", Role: " + me.getRole());
+
         List<ChatRoom> rooms;
         if (me.getRole() == Role.ADMIN) {
             rooms = roomRepo.findAll();
@@ -77,7 +82,6 @@ public class ChatRoomController {
 
         return "rooms";
     }
-
 
     @GetMapping("/all")
     public String listAllRooms(Model model) {
