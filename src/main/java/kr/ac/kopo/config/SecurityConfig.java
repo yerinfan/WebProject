@@ -51,7 +51,7 @@ public class SecurityConfig {
             	)
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/rooms", true) // ✅ 성공 시 강제 이동
+                .successHandler(successHandler)
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
