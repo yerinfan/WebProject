@@ -10,13 +10,16 @@
       width: 320px;
       height: 240px;
       border: 1px solid black;
-      display: block;
-      background-color: black;
+      background: black;
     }
 
     #status {
       margin-top: 10px;
       font-weight: bold;
+    }
+
+    button:disabled {
+      opacity: 0.5;
     }
   </style>
 </head>
@@ -26,16 +29,13 @@
 
   <video id="video" autoplay muted playsinline></video>
   <br />
-  <button id="startBtn">등록 시작</button>
-  <div id="status"></div>
+  <button id="startBtn" disabled>등록 시작</button>
+  <div id="status">카메라 준비 중...</div>
   <br />
   <a th:href="@{/rooms}">← 채팅방 목록으로</a>
 
-  <!-- Thymeleaf에서 사용자명 및 CSRF 토큰 주입 -->
   <script th:inline="javascript">
     const username = [[${#authentication.name}]];
-    const csrfToken = /*[[${_csrf.token}]]*/ "";
-    const csrfHeader = /*[[${_csrf.headerName}]]*/ "";
   </script>
 
   <script>
@@ -48,16 +48,19 @@
 
     const flaskBaseUrl = 'https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev';
 
+    // 카메라 접근
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
-        video.onloadedmetadata = () => {
-          video.play();
+        video.onloadeddata = () => {
           console.log("📷 video loaded:", video.videoWidth, video.videoHeight);
+          statusDiv.innerText = "카메라 준비 완료! 등록을 시작하세요.";
+          startBtn.disabled = false;
         };
       })
       .catch(err => {
         alert('카메라 사용 불가: ' + err);
+        statusDiv.innerText = "카메라 접근 실패!";
       });
 
     function checkFace(imageData) {
@@ -67,19 +70,20 @@
         body: JSON.stringify({ image: imageData })
       })
       .then(res => res.json())
-      .then(data => data.hasFace);
+      .then(data => {
+        console.log("✅ checkFace result:", data);
+        return data.hasFace;
+      });
     }
 
     async function captureAndSend(username) {
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth || 320;
       canvas.height = video.videoHeight || 240;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = canvas.toDataURL('image/jpeg');
-      console.log("📸 캡처된 이미지 크기:", canvas.width, canvas.height);
+      console.log(`📸 캡처된 이미지 크기: ${canvas.width}x${canvas.height}`);
 
       const hasFace = await checkFace(imageData);
       if (!hasFace) {
@@ -97,9 +101,7 @@
 
         fetch(`${flaskBaseUrl}/register-face`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, images })
         })
         .then(res => res.json())
