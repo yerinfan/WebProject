@@ -1,17 +1,28 @@
 package kr.ac.kopo.controller;
 
-import kr.ac.kopo.dto.FaceRegisterRequestDTO;
-import kr.ac.kopo.model.User;
-import kr.ac.kopo.repository.UserRepository;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import jakarta.servlet.http.HttpSession;
-
-import java.util.HashMap;
-import java.util.Map;
+import kr.ac.kopo.dto.FaceRegisterRequestDTO;
+import kr.ac.kopo.model.User;
+import kr.ac.kopo.repository.UserRepository;
 
 @RestController
 public class FaceAuthController {
@@ -21,18 +32,20 @@ public class FaceAuthController {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private UserDetailsService userDetailsService;
+
     @PostMapping("/face-login-success")
     public ResponseEntity<?> faceLoginSuccess(@RequestBody Map<String, String> body, HttpSession session) {
         String username = body.get("username");
 
-        // 사용자 DB 조회
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
-        }
+        // ✅ Spring Security 방식으로 인증 처리
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UsernamePasswordAuthenticationToken auth =
+            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-        // ✅ 세션에 사용자 인증 정보 저장
-        session.setAttribute("user", user);  // 또는 Spring Security의 Authentication으로 처리할 수도 있음
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
         return ResponseEntity.ok().build();
     }
