@@ -66,7 +66,8 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
         	    "http://localhost:8888",
         	    "http://172.31.57.16:8888",
-        	    "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev"
+        	    "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev",
+        	    "https://webproject-zty4.onrender.com"
         	));
         config.setAllowCredentials(true);
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
