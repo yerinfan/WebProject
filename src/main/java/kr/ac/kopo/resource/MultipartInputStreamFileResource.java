@@ -6,12 +6,10 @@ import org.springframework.core.io.InputStreamResource;
 
 public class MultipartInputStreamFileResource extends InputStreamResource {
 	private final String filename;
-    private final long contentLength;
 
-    public MultipartInputStreamFileResource(InputStream inputStream, String filename, long contentLength) {
+    public MultipartInputStreamFileResource(InputStream inputStream, String filename) {
         super(inputStream);
         this.filename = filename;
-        this.contentLength = contentLength;
     }
 
     @Override
@@ -21,6 +19,6 @@ public class MultipartInputStreamFileResource extends InputStreamResource {
 
     @Override
     public long contentLength() {
-        return contentLength;
+        return -1;
     }
 }
