@@ -1,99 +1,104 @@
 <body>
-	<h2>얼굴로 로그인</h2>
-	<video id="video" autoplay width="300"></video>
-	<canvas id="canvas" style="display: none;"></canvas>
+  <h2>얼굴로 로그인</h2>
+  <video id="video" autoplay width="300"></video>
+  <canvas id="canvas" style="display: none;"></canvas>
 
-	<div id="failMessage" style="display: none; color: red;">
-		얼굴을 인식하지 못했습니다.<br> <a href="/login">아이디와 비밀번호로 로그인하기</a>
-	</div>
+  <div id="failMessage" style="display: none; color: red;">
+    얼굴을 인식하지 못했습니다.<br>
+    <a href="/login">아이디와 비밀번호로 로그인하기</a>
+  </div>
 
-<script>
-  const flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
-  const springSessionUrl = "/face-login-success";
+  <script>
+    const flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
+    const springSessionUrl = "/face-login-success";
 
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      document.getElementById('video').srcObject = stream;
-      startFaceRecognition();
-    })
-    .catch(err => {
-      alert("웹캠 오류: " + err.message);
-    });
-
-  let matched = false;
-
-  function dataURItoBlob(dataURI) {
-    const byteString = atob(dataURI.split(',')[1]);
-    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([ab], { type: mimeString });
-  }
-
-  const startFaceRecognition = () => {
-    const canvas = document.getElementById("canvas");
-    const video = document.getElementById("video");
-
-    const intervalId = setInterval(() => {
-      if (matched) {
-        clearInterval(intervalId);
-        return;
-      }
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      const imageData = canvas.toDataURL("image/jpeg");
-      const blob = dataURItoBlob(imageData);
-
-      const formData = new FormData();
-      formData.append("image", blob, "face.jpg");
-
-      fetch(flaskUrl, {
-        method: "POST",
-        body: formData
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        document.getElementById('video').srcObject = stream;
+        startFaceRecognition();
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            return fetch(springSessionUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ username: data.user })
-            });
-          } else {
-            console.log("⚠️ 얼굴 인식 실패:", data.message);
-            throw new Error("얼굴 인식 실패");
-          }
-        })
-        .then(res => {
-          if (!res.ok) {
-            return res.text().then(text => {
-              throw new Error("Spring 서버 로그인 실패: " + text);
-            });
-          }
-          matched = true;
-          //window.location.href = "/rooms";
-        })
-        .catch(err => {
-          console.error("❌ 얼굴 로그인 오류:", err.message);
-          clearInterval(intervalId);
-          document.getElementById("failMessage").style.display = "block";
-        });
+      .catch(err => {
+        alert("웹캠 오류: " + err.message);
+      });
 
-      // 타임아웃
-      setTimeout(() => {
-        if (!matched) {
+    let matched = false;
+
+    function dataURItoBlob(dataURI) {
+      const byteString = atob(dataURI.split(',')[1]);
+      const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      return new Blob([ab], { type: mimeString });
+    }
+
+    const startFaceRecognition = () => {
+      const canvas = document.getElementById("canvas");
+      const video = document.getElementById("video");
+
+      const intervalId = setInterval(() => {
+        if (matched) {
           clearInterval(intervalId);
-          document.getElementById("failMessage").style.display = "block";
+          return;
         }
-      }, 10000);
-    }, 1000);
-  };
-</script>
 
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg");
+        const blob = dataURItoBlob(imageData);
+
+        const formData = new FormData();
+        formData.append("image", blob, "face.jpg");
+
+        fetch(flaskUrl, {
+          method: "POST",
+          body: formData
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              return fetch(springSessionUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ username: data.user })
+              });
+            } else {
+              console.log("⚠️ 얼굴 인식 실패:", data.message);
+              throw new Error("얼굴 인식 실패");
+            }
+          })
+          .then(res => {
+            if (!res.ok) {
+              return res.text().then(text => {
+                throw new Error("Spring 서버 로그인 실패: " + text);
+              });
+            }
+            matched = true;
+
+            // ✅ 성공 메시지와 버튼 표시
+            document.getElementById("failMessage").innerHTML = `
+              <span style="color:green;">얼굴 로그인 성공!<br>
+              <a href="/rooms" style="color:blue; text-decoration:underline;">👉 채팅방으로 이동</a></span>
+            `;
+            document.getElementById("failMessage").style.display = "block";
+          })
+          .catch(err => {
+            console.error("❌ 얼굴 로그인 오류:", err.message);
+            clearInterval(intervalId);
+            document.getElementById("failMessage").style.display = "block";
+          });
+
+        setTimeout(() => {
+          if (!matched) {
+            clearInterval(intervalId);
+            document.getElementById("failMessage").style.display = "block";
+          }
+        }, 10000);
+      }, 1000);
+    };
+  </script>
 </body>
