@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.ac.kopo.resource.MultipartInputStreamFileResource;
 
 @RestController
@@ -29,48 +32,29 @@ public class ProxyController {
     @PostMapping("/api/face/login")
     public ResponseEntity<?> proxyFaceLogin(@RequestParam("image") MultipartFile imageFile) {
         try {
-            // 파일 null 또는 비어있는지 확인
-            if (imageFile == null || imageFile.isEmpty()) {
-                System.err.println("❌ 업로드된 이미지가 없습니다.");
-                Map<String, Object> error = new HashMap<>();
-                error.put("success", false);
-                error.put("message", "이미지 파일이 비어 있습니다.");
-                return ResponseEntity.badRequest().body(error);
-            }
-
-            // Content-Type: multipart/form-data 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            // 이미지 데이터를 Flask로 전달할 body 구성
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("image", new MultipartInputStreamFileResource(
-                    imageFile.getInputStream(), imageFile.getOriginalFilename())  // ← 길이 인자 제거됨
-            );
+                    imageFile.getInputStream(), imageFile.getOriginalFilename()
+            ));
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            // 🛰 Flask 서버 주소
             String flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
-
-            // 요청 전송
             ResponseEntity<String> response = restTemplate.postForEntity(flaskUrl, requestEntity, String.class);
 
-            // JSON인지 확인 (필요시 검증 추가 가능)
-            HttpHeaders respHeaders = response.getHeaders();
-            String contentType = respHeaders.getContentType() != null ? respHeaders.getContentType().toString() : "";
-            if (!contentType.contains("application/json")) {
-                System.err.println("⚠️ JSON 응답 아님: " + response.getBody());
-            }
+            // JSON 문자열 → Map 변환
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> json = mapper.readValue(response.getBody(), new TypeReference<>() {});
 
-            return ResponseEntity
-                    .status(response.getStatusCode())
+            return ResponseEntity.status(response.getStatusCode())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(response.getBody());
+                    .body(json);
 
         } catch (Exception e) {
-            // 예외 발생 시 JSON 형식으로 응답
-            System.err.println("❌ 프록시 오류: " + e.getMessage());
+            e.printStackTrace();
             Map<String, Object> error = new HashMap<>();
             error.put("success", false);
             error.put("message", "프록시 오류: " + e.getMessage());
