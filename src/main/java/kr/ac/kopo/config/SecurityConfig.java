@@ -30,7 +30,7 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/register-face", "/h2-console/**") // ✅ CSRF 예외 처리
+                .ignoringRequestMatchers("/register-face", "/api/face/**","/h2-console/**") // ✅ CSRF 예외 처리
             )
             .headers(headers -> headers
                 .frameOptions(frame -> frame.disable()) // ✅ H2 콘솔 iframe 허용
