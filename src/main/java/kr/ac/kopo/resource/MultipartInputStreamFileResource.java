@@ -5,11 +5,13 @@ import java.io.InputStream;
 import org.springframework.core.io.InputStreamResource;
 
 public class MultipartInputStreamFileResource extends InputStreamResource {
-    private final String filename;
+	private final String filename;
+    private final long contentLength;
 
-    public MultipartInputStreamFileResource(InputStream inputStream, String filename) {
+    public MultipartInputStreamFileResource(InputStream inputStream, String filename, long contentLength) {
         super(inputStream);
         this.filename = filename;
+        this.contentLength = contentLength;
     }
 
     @Override
@@ -19,6 +21,6 @@ public class MultipartInputStreamFileResource extends InputStreamResource {
 
     @Override
     public long contentLength() {
-        return -1; // length 가 불명확하므로 -1 반환
+        return contentLength;
     }
 }
