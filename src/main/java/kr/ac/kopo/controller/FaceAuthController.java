@@ -5,21 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import jakarta.servlet.http.HttpSession;
@@ -34,31 +27,28 @@ public class FaceAuthController {
 
     @Autowired
     private UserRepository userRepository;
-    
-    @Autowired
-    private UserDetailsService userDetailsService;
 
     @PostMapping("/face-login-success")
     public ResponseEntity<?> faceLoginSuccess(@RequestBody Map<String, String> body, HttpSession session) {
         String username = body.get("username");
 
-        // 사용자 확인
+        // ✅ 사용자 확인
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
         }
 
-        // ✅ Spring Security 인증 객체 만들기
+        // ✅ Spring Security 인증 객체 생성
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
-                user.getPassword(),
+                user.getPassword() != null ? user.getPassword() : "", // null 방지
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
         );
 
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-        // ✅ SecurityContext에 설정
+        // ✅ SecurityContext 설정 및 세션에 저장
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authToken);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
@@ -66,12 +56,10 @@ public class FaceAuthController {
         return ResponseEntity.ok().build();
     }
 
-
     @PostMapping("/register-face")
     public ResponseEntity<Map<String, Object>> registerFace(@RequestBody FaceRegisterRequestDTO dto) {
-        String flaskUrl = "http://localhost:5000/register-face"; // 실제 Flask 서버 주소로 교체 필요
+        String flaskUrl = "http://localhost:5000/register-face"; // Flask 서버 주소에 따라 변경 필요
 
-        // Flask 서버로 전달할 요청 JSON 구성
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", dto.getUsername());
         payload.put("images", dto.getImages());
@@ -84,7 +72,6 @@ public class FaceAuthController {
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(flaskUrl, entity, Map.class);
 
-            // Flask에서 등록 성공시 DB에 얼굴 등록 여부 true로 반영
             if (response.getBody() != null && Boolean.TRUE.equals(response.getBody().get("success"))) {
                 User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
                 if (user != null) {
