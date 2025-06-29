@@ -8,6 +8,8 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import jakarta.servlet.http.HttpSession;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +20,23 @@ public class FaceAuthController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @PostMapping("/face-login-success")
+    public ResponseEntity<?> faceLoginSuccess(@RequestBody Map<String, String> body, HttpSession session) {
+        String username = body.get("username");
+
+        // 사용자 DB 조회
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+
+        // ✅ 세션에 사용자 인증 정보 저장
+        session.setAttribute("user", user);  // 또는 Spring Security의 Authentication으로 처리할 수도 있음
+
+        return ResponseEntity.ok().build();
+    }
+
 
     @PostMapping("/register-face")
     public ResponseEntity<Map<String, Object>> registerFace(@RequestBody FaceRegisterRequestDTO dto) {

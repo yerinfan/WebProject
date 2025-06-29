@@ -10,6 +10,7 @@
 
 <script>
   const flaskUrl = "https://7c62cbc8-2887-4b96-81b2-b9603ea54eec-00-fishgerrldgj.pike.replit.dev/face/login";
+  const springSessionUrl = "/face-login-success";  // Spring 서버 세션 생성용
 
   navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
@@ -25,13 +26,11 @@
   function dataURItoBlob(dataURI) {
     const byteString = atob(dataURI.split(',')[1]);
     const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-
     const ab = new ArrayBuffer(byteString.length);
     const ia = new Uint8Array(ab);
     for (let i = 0; i < byteString.length; i++) {
       ia[i] = byteString.charCodeAt(i);
     }
-
     return new Blob([ab], { type: mimeString });
   }
 
@@ -61,10 +60,23 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          // ✅ Spring 서버에 세션 로그인 요청
+          return fetch(springSessionUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: data.user })
+          });
+        } else {
+          console.log("⚠️ 얼굴 인식 실패:", data.message);
+          throw new Error("얼굴 인식 실패");
+        }
+      })
+      .then(res => {
+        if (res.ok) {
           matched = true;
           window.location.href = "/rooms";
         } else {
-          console.log("⚠️ 얼굴 인식 실패:", data.message);
+          throw new Error("Spring 서버 로그인 실패");
         }
       })
       .catch(err => {
