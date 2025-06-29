@@ -36,16 +36,18 @@ public class SecurityConfig {
                 .frameOptions(frame -> frame.disable()) // ✅ H2 콘솔 iframe 허용
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/signup", "/login", "/css/**", "/js/**").permitAll()
-                .requestMatchers("/logout").permitAll()
-                .requestMatchers("/login/face").permitAll()
-                .requestMatchers(HttpMethod.POST, "/login/face").permitAll()
-                .requestMatchers("/register-face").permitAll()
-                .requestMatchers(HttpMethod.POST, "/register-face").permitAll()
-                .requestMatchers("/h2-console/**").permitAll() // ✅ H2 콘솔 접근 허용
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+            	    .requestMatchers("/", "/signup", "/login", "/css/**", "/js/**").permitAll()
+            	    .requestMatchers("/logout").permitAll()
+            	    .requestMatchers("/login/face").permitAll()
+            	    .requestMatchers(HttpMethod.POST, "/login/face").permitAll()
+            	    .requestMatchers("/register-face").permitAll()
+            	    .requestMatchers(HttpMethod.POST, "/register-face").permitAll()
+            	    .requestMatchers("/face-login-success").permitAll() // ✅ 얼굴 로그인 세션 생성 허용
+            	    .requestMatchers(HttpMethod.POST, "/face-login-success").permitAll() // POST도 허용
+            	    .requestMatchers("/h2-console/**").permitAll()
+            	    .requestMatchers("/admin/**").hasRole("ADMIN")
+            	    .anyRequest().authenticated()
+            	)
             .formLogin(form -> form
                 .loginPage("/login")
                 .successHandler(successHandler)

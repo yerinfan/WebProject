@@ -53,6 +53,10 @@ public class FaceAuthController {
         context.setAuthentication(authToken);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
+        System.out.println("👤 얼굴 로그인 성공: " + username);
+        System.out.println("👉 세션 ID: " + session.getId());
+        System.out.println("👉 SecurityContext 저장됨: " + context.getAuthentication().getName());
+        
         return ResponseEntity.ok().build();
     }
 
