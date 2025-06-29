@@ -2,5 +2,15 @@
 
 INSERT INTO USERS (USERNAME, PASSWORD, ROLE, FACE_REGISTERED)
 VALUES 
-  ('admin', '$2a$10$5rBfszKHMTcfNPVoO7Cw9uM1QxjK1J1cAzTxOjTi4QoQ7GfNbnHF6', 'ADMIN', FALSE),
-  ('user',  '$2a$10$uQuz8W2sgAyat1QxR3K6HeRYC8/UOrkF7zTyX/Ydt9s0xTcVNHhOq', 'USER',  FALSE);
+  (
+    'admin',
+    '$2a$10$e0MYzXyjpJS7Pd0RVvHwHeFX5bjSRBBYiF5LjYL4OeVzX1nchRZSi',  -- "1234" 암호화
+    'ADMIN',
+    FALSE
+  ),
+  (
+    'user',
+    '$2a$10$e0MYzXyjpJS7Pd0RVvHwHeFX5bjSRBBYiF5LjYL4OeVzX1nchRZSi',  -- 기존 유저
+    'USER',
+    FALSE
+  );
