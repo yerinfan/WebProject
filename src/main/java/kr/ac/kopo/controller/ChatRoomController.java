@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -105,6 +106,7 @@ public class ChatRoomController {
 
         User me = userRepo.findByUsername(principal.getName()).orElseThrow();
         room.getParticipants().add(me);
+        room.setOwner(me);
         roomRepo.save(room);
 
         return "redirect:/rooms";
@@ -223,8 +225,16 @@ public class ChatRoomController {
     }
 
     @PostMapping("/{roomId}/delete")
-    public String deleteRoom(@PathVariable("roomId") Long roomId) {
-        roomRepo.deleteById(roomId);
+    public String deleteRoom(@PathVariable("roomId") Long roomId, Principal principal) {
+        ChatRoom room = roomRepo.findById(roomId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+
+        // 현재 로그인한 사용자가 방장인지 확인
+        String currentUsername = principal.getName();
+        if (!room.getOwner().getUsername().equals(currentUsername)) {
+            throw new AccessDeniedException("방장만 방을 삭제할 수 있습니다.");
+        }
+
+        roomRepo.delete(room);
         return "redirect:/rooms";
     }
 }

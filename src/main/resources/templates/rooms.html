@@ -18,16 +18,23 @@
     <h1 class="page-title">내 채팅방 목록</h1>
 
     <ul class="room-list">
-      <li th:each="r : ${rooms}" class="room-item">
-        <span class="room-name" th:text="${r.name}">Room1</span>
-        <div class="room-actions">
-          <a th:href="@{|/rooms/${r.id}|}" class="btn enter">입장</a>
-          <form th:action="@{|/rooms/${r.id}/delete|}" method="post" class="inline-form">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-            <button type="submit" class="btn delete">삭제</button>
-          </form>
-        </div>
-      </li>
+		<li th:each="r : ${rooms}" class="room-item">
+		  <span class="room-name">
+		    <span th:text="${r.name}">Room1</span>
+		    <!-- 👑 방장인 경우 왕관 아이콘 표시 -->
+		    <span th:if="${r.owner.username == #authentication.name}" style="color: goldenrod; margin-left: 6px;">👑 방장</span>
+		  </span>
+		  <div class="room-actions">
+		    <a th:href="@{|/rooms/${r.id}|}" class="btn enter">입장</a>
+		
+		    <!-- ✅ 현재 로그인한 사용자가 방장인 경우만 삭제 버튼 표시 -->
+		    <form th:if="${r.owner.username == #authentication.name}"
+		          th:action="@{|/rooms/${r.id}/delete|}" method="post" class="inline-form">
+		      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+		      <button type="submit" class="btn delete">삭제</button>
+		    </form>
+		  </div>
+		</li>
     </ul>
 
     <section class="create-section">
