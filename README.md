@@ -24,11 +24,11 @@
 
 ```mermaid
 flowchart LR
-    subgraph Client[🌐 Web Client]
+    subgraph Client["Web Client"]
         UI[Frontend (HTML/CSS/JS)]
     end
 
-    subgraph Server[⚙️ Spring Boot Server]
+    subgraph Server["Spring Boot Server"]
         Controller[Spring MVC Controller]
         Service[Service Layer]
         Repo[MyBatis Repository]
@@ -37,13 +37,13 @@ flowchart LR
         RESTAPI[REST API (Ajax)]
     end
 
-    subgraph DB[🗄️ Oracle DB]
+    subgraph DB["Oracle DB"]
         UserTable[(Users)]
         ChatTable[(Chats)]
         MemoTable[(Memos)]
     end
 
-    subgraph FaceServer[🤖 Flask Face Recognition]
+    subgraph FaceServer["Flask Face Recognition"]
         FaceAPI[Face Recognition API]
     end
 
@@ -52,6 +52,7 @@ flowchart LR
     Controller --> Service --> Repo --> DB
     Security --> Controller
     Service <-->|REST API| FaceServer
+
 ```
 
 ---
