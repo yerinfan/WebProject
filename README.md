@@ -22,6 +22,40 @@
 
 ---
 
+```mermaid
+flowchart LR
+    subgraph Client[🌐 Web Client]
+        UI[Frontend (HTML/CSS/JS)]
+    end
+
+    subgraph Server[⚙️ Spring Boot Server]
+        Controller[Spring MVC Controller]
+        Service[Service Layer]
+        Repo[MyBatis Repository]
+        Security[Spring Security]
+        WebSocket[WebSocket (SockJS+STOMP)]
+        RESTAPI[REST API (Ajax)]
+    end
+
+    subgraph DB[🗄️ Oracle DB]
+        UserTable[(Users)]
+        ChatTable[(Chats)]
+        MemoTable[(Memos)]
+    end
+
+    subgraph FaceServer[🤖 Flask Face Recognition]
+        FaceAPI[Face Recognition API]
+    end
+
+    UI --> |HTTP / Ajax| Controller
+    UI <-->|WebSocket| WebSocket
+    Controller --> Service --> Repo --> DB
+    Security --> Controller
+    Service <-->|REST API| FaceServer
+```
+
+---
+
 ## 📂 주요 기능
 - 회원가입 및 로그인 화면
 - 채팅방 입장/퇴장
