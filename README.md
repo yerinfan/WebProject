@@ -22,38 +22,7 @@
 
 ---
 
-```mermaid
-flowchart LR
-    subgraph Client["Web Client"]
-        UI[Frontend (HTML/CSS/JS)]
-    end
-
-    subgraph Server["Spring Boot Server"]
-        Controller[Spring MVC Controller]
-        Service[Service Layer]
-        Repo[MyBatis Repository]
-        Security[Spring Security]
-        WebSocket[WebSocket (SockJS+STOMP)]
-        RESTAPI[REST API (Ajax)]
-    end
-
-    subgraph DB["Oracle DB"]
-        UserTable[(Users)]
-        ChatTable[(Chats)]
-        MemoTable[(Memos)]
-    end
-
-    subgraph FaceServer["Flask Face Recognition"]
-        FaceAPI[Face Recognition API]
-    end
-
-    UI --> |HTTP / Ajax| Controller
-    UI <-->|WebSocket| WebSocket
-    Controller --> Service --> Repo --> DB
-    Security --> Controller
-    Service <-->|REST API| FaceServer
-
-```
+<img width="1264" height="740" alt="architecture" src="https://github.com/user-attachments/assets/d96ff257-740f-43ad-96aa-f2b1960a9d6e" />
 
 ---
 
